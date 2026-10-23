@@ -9,11 +9,12 @@ export default function Home() {
   const [latestRelease, setLatestRelease] = useState<any>(null);
   const [loadingRelease, setLoadingRelease] = useState(true);
   
-  // NEW: State for Site Settings
   const [settings, setSettings] = useState({
     heroHeading: "RISING INCENSE",
     heroSubheading: "Gatherers and assemblers of ancient sounds, ministering in the Presence after the order of Asaph."
   });
+
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isReleased: false });
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -34,7 +35,6 @@ export default function Home() {
         // 2. Fetch Latest Release
         const querySnapshot = await getDocs(collection(db, "releases"));
         if (!querySnapshot.empty) {
-          // Sort manually by date to prevent Firestore index errors
           const releases = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           releases.sort((a: any, b: any) => {
              const dateA = a.createdAt?.toMillis() || 0;
@@ -52,9 +52,41 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // Countdown Timer Logic
+  useEffect(() => {
+    if (!latestRelease) return;
+
+    // If no date is set, treat it as already released
+    if (!latestRelease.releaseDate) {
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isReleased: true });
+      return;
+    }
+
+    const targetDate = new Date(latestRelease.releaseDate).getTime();
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isReleased: true });
+        clearInterval(interval);
+      } else {
+        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        setTimeLeft({ days: d, hours: h, minutes: m, seconds: s, isReleased: false });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [latestRelease]);
+
   return (
     <>
-      {/* HERO (NOW DYNAMIC) */}
+      {/* HERO */}
       <section id="hero">
         <div className="container hero-content">
           <h1 className="hero-heading">{settings.heroHeading}</h1>
@@ -123,23 +155,52 @@ export default function Home() {
                 <div className="date">
                   RELEASE DATE: {latestRelease.releaseDate ? new Date(latestRelease.releaseDate).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : "TBA"}
                 </div>
-                
+
+                {/* COUNTDOWN TIMER */}
+                {!timeLeft.isReleased && (
+                  <div style={{ display: "flex", gap: "15px", margin: "20px 0", flexWrap: "wrap" }}>
+                    <div style={{ textAlign: "center", background: "rgba(255,174,0,0.1)", padding: "10px 15px", borderRadius: "8px", border: "1px solid rgba(255,174,0,0.3)" }}>
+                      <span style={{ display: "block", fontSize: "1.5rem", fontWeight: "bold", color: "#FFAE00" }}>{timeLeft.days}</span>
+                      <span style={{ fontSize: "0.7rem", textTransform: "uppercase", color: "#ccc" }}>Days</span>
+                    </div>
+                    <div style={{ textAlign: "center", background: "rgba(255,174,0,0.1)", padding: "10px 15px", borderRadius: "8px", border: "1px solid rgba(255,174,0,0.3)" }}>
+                      <span style={{ display: "block", fontSize: "1.5rem", fontWeight: "bold", color: "#FFAE00" }}>{timeLeft.hours}</span>
+                      <span style={{ fontSize: "0.7rem", textTransform: "uppercase", color: "#ccc" }}>Hours</span>
+                    </div>
+                    <div style={{ textAlign: "center", background: "rgba(255,174,0,0.1)", padding: "10px 15px", borderRadius: "8px", border: "1px solid rgba(255,174,0,0.3)" }}>
+                      <span style={{ display: "block", fontSize: "1.5rem", fontWeight: "bold", color: "#FFAE00" }}>{timeLeft.minutes}</span>
+                      <span style={{ fontSize: "0.7rem", textTransform: "uppercase", color: "#ccc" }}>Mins</span>
+                    </div>
+                    <div style={{ textAlign: "center", background: "rgba(255,174,0,0.1)", padding: "10px 15px", borderRadius: "8px", border: "1px solid rgba(255,174,0,0.3)" }}>
+                      <span style={{ display: "block", fontSize: "1.5rem", fontWeight: "bold", color: "#FFAE00" }}>{timeLeft.seconds}</span>
+                      <span style={{ fontSize: "0.7rem", textTransform: "uppercase", color: "#ccc" }}>Secs</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="release-actions">
-                  {latestRelease.preSaveLink && (
+                  {/* If NOT released yet, show Pre-Save */}
+                  {!timeLeft.isReleased && latestRelease.preSaveLink && (
                     <a href={latestRelease.preSaveLink} className="btn-pre-save" target="_blank" rel="noopener noreferrer">PRE-SAVE NOW</a>
                   )}
-                  {latestRelease.streamLink && (
-                    <a href={latestRelease.streamLink} className="btn-stream" target="_blank" rel="noopener noreferrer">🎵 STREAM NOW</a>
-                  )}
-                  {latestRelease.youtubeLink && (
-                    <a href={latestRelease.youtubeLink} className="btn-watch-video" target="_blank" rel="noopener noreferrer">
-                      <i className="fab fa-youtube"></i> WATCH VIDEO
-                    </a>
-                  )}
-                  {latestRelease.audioUrl && (
-                    <a href={latestRelease.audioUrl} className="btn-stream" target="_blank" rel="noopener noreferrer" style={{ backgroundColor: "#FF5900", color: "#FFF", marginTop: "10px" }}>
-                      <i className="fas fa-download"></i> DOWNLOAD AUDIO
-                    </a>
+
+                  {/* If RELEASED, show Stream, Video, and Download */}
+                  {timeLeft.isReleased && (
+                    <>
+                      {latestRelease.streamLink && (
+                        <a href={latestRelease.streamLink} className="btn-stream" target="_blank" rel="noopener noreferrer">🎵 STREAM NOW</a>
+                      )}
+                      {latestRelease.youtubeLink && (
+                        <a href={latestRelease.youtubeLink} className="btn-watch-video" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
+                          <i className="fab fa-youtube"></i> WATCH VIDEO
+                        </a>
+                      )}
+                      {latestRelease.audioUrl && (
+                        <a href={latestRelease.audioUrl} className="btn-stream" target="_blank" rel="noopener noreferrer" style={{ backgroundColor: "#FF5900", color: "#FFF", marginTop: "10px" }}>
+                          <i className="fas fa-download"></i> DOWNLOAD AUDIO
+                        </a>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -187,8 +248,6 @@ export default function Home() {
         <div className="container">
           <div className="section-title fade-up"><h2>FREQUENTLY ASKED QUESTIONS</h2></div>
           <div className="faq-list">
-            
-            {/* FAQ ITEM 1 */}
             <div className="faq-item fade-up">
               <div className="faq-question" onClick={() => toggleFaq(0)}>
                 <span>What is QOL ASAPH?</span>
@@ -198,8 +257,6 @@ export default function Home() {
                 <p>QOL ASAPH (Kingdom of Light ASAPH) is a ministry dedicated to raising gatherers and assemblers of ancient sounds. We are a people saddled with priestly duties to minister dutifully in the Presence after the order of Asaph. Our mission is to raise prophetic psalmists and worshipers who carry the sound of heaven to this generation.</p>
               </div>
             </div>
-
-            {/* FAQ ITEM 2 */}
             <div className="faq-item fade-up">
               <div className="faq-question" onClick={() => toggleFaq(1)}>
                 <span>How can I join QOL ASAPH?</span>
@@ -209,8 +266,6 @@ export default function Home() {
                 <p>You can join us by clicking the <strong>"JOIN US"</strong> button in our navigation bar, which will take you to our WhatsApp community. You can also attend our convergence, partner with us, or reach out through our <a href="/contact" style={{ color: "#FFAE00", textDecoration: "underline" }}>contact page</a>. We welcome everyone who has a heart for prophetic worship and ancient sounds.</p>
               </div>
             </div>
-
-            {/* FAQ ITEM 3 */}
             <div className="faq-item fade-up">
               <div className="faq-question" onClick={() => toggleFaq(2)}>
                 <span>What happens at QOL ASAPH events?</span>
@@ -220,8 +275,6 @@ export default function Home() {
                 <p>Our events feature prophetic worship sessions, ancient sound ministrations, commissioning services, and corporate prayer & fellowship. QOL ASAPH 1.0 was our inaugural prophetic convergence where we were publicly commissioned into the ministerial responsibility entrusted to us by the Lord. Stay tuned for <strong>QOL ASAPH 2.0</strong>!</p>
               </div>
             </div>
-
-            {/* FAQ ITEM 4 */}
             <div className="faq-item fade-up">
               <div className="faq-question" onClick={() => toggleFaq(3)}>
                 <span>How can I support the ministry?</span>
@@ -231,8 +284,6 @@ export default function Home() {
                 <p>You can support QOL ASAPH through prayer, partnerships, volunteering, and financial contributions. We believe that every sound needs a vessel, and every vessel needs support. Reach out to us through our <a href="/contact" style={{ color: "#FFAE00", textDecoration: "underline" }}>contact page</a> to learn more about partnership opportunities and how you can be part of what God is doing through this ministry.</p>
               </div>
             </div>
-
-            {/* FAQ ITEM 5 */}
             <div className="faq-item fade-up">
               <div className="faq-question" onClick={() => toggleFaq(4)}>
                 <span>How can I submit a testimony?</span>
@@ -242,8 +293,6 @@ export default function Home() {
                 <p>We would love to hear your testimony! You can submit it through our <a href="/contact" style={{ color: "#FFAE00", textDecoration: "underline" }}>contact form</a>, email us directly at <strong>Qolasaph@gmail.com</strong>, or share it on our social media platforms. Your testimony could be a blessing to someone else on their journey.</p>
               </div>
             </div>
-
-            {/* FAQ ITEM 6 */}
             <div className="faq-item fade-up">
               <div className="faq-question" onClick={() => toggleFaq(5)}>
                 <span>How do I stay updated on events and releases?</span>
@@ -253,8 +302,6 @@ export default function Home() {
                 <p>Follow us on social media, join our <strong>WhatsApp group</strong> through the "JOIN US" button in our navigation, or check our website regularly. We post updates about upcoming convergences, new sound releases, and ministry activities on our platforms. Don't miss out on what God is doing through QOL ASAPH!</p>
               </div>
             </div>
-
-            {/* FAQ ITEM 7 */}
             <div className="faq-item fade-up">
               <div className="faq-question" onClick={() => toggleFaq(6)}>
                 <span>What is the vision behind QOL ASAPH?</span>
@@ -264,7 +311,6 @@ export default function Home() {
                 <p>The vision is bigger than music. It is bigger than a gathering. It is bigger than songs. It is the raising of a people who know God, understand worship beyond music, can discern the voice of God, and carry ancient sounds into a contemporary generation. We are raising prophetic priests whose private altar can sustain their public expression.</p>
               </div>
             </div>
-            
           </div>
         </div>
       </section>
