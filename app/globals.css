@@ -1590,3 +1590,15 @@ section {
     flex: 1;
   }
 }
+/* --- FULL SCREEN HERO ON MOBILE (HOME PAGE) --- */
+@media (max-width: 768px) {
+  #hero {
+    min-height: 100vh !important; 
+    min-height: 100dvh !important; /* Handles mobile address bars perfectly */
+    padding-top: 100px !important; 
+    padding-bottom: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
