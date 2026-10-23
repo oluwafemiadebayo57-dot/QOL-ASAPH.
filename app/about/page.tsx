@@ -187,6 +187,30 @@ export default function About() {
         </div>
       </section>
 
+      {/* MEET THE TEAM (THE ASAPHITES) */}
+      <section id="team">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title gold">THE ASAPHITES</h2>
+            <p className="section-subtitle">The voices and vessels behind Qôl Asaph</p>
+          </div>
+          
+          <div className="team-image-container">
+            <img 
+              src="https://res.cloudinary.com/izxlyyn5/image/upload/v1792766171/IMG_2661.jpg" 
+              alt="QOL ASAPH Team" 
+              className="team-image"
+            />
+          </div>
+          
+          <div className="team-description glass-light">
+            <p>
+              We are a collective of worshippers, musicians, and prophetic voices united by a single mandate: to gather and assemble ancient sounds for this generation. We do not merely perform; we minister. We do not just sing; we steward the sound of heaven.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* THE STORY OF OUR COMMISSIONING */}
       <section id="story">
         <div className="container">

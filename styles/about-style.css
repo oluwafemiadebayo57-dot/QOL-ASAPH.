@@ -1791,3 +1791,71 @@ footer {
   padding: 0 !important;
   max-width: 100% !important;
 }
+/* ---------- THE ASAPHITES / TEAM SECTION ---------- */
+#team {
+  background: var(--light);
+  position: relative;
+  padding-top: 40px;
+}
+
+.team-image-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto 30px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 174, 0, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 0 0 40px rgba(255, 174, 0, 0.1);
+  position: relative;
+  transition: all 0.4s ease;
+}
+
+.team-image-container:hover {
+  border-color: var(--primary);
+  transform: translateY(-5px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2), 0 0 60px rgba(255, 174, 0, 0.2);
+}
+
+.team-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.team-image-container:hover .team-image {
+  transform: scale(1.02);
+}
+
+.team-description {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 30px;
+  border-radius: 16px;
+  background: rgba(255, 246, 225, 0.8);
+  border: 1px solid rgba(255, 174, 0, 0.2);
+}
+
+.team-description p {
+  color: var(--dark);
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .team-image-container {
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .team-description {
+    padding: 20px;
+  }
+  
+  .team-description p {
+    font-size: 0.95rem;
+  }
+}
